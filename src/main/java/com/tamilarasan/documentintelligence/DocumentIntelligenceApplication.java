@@ -1,0 +1,13 @@
+package com.tamilarasan.documentintelligence;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class DocumentIntelligenceApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(DocumentIntelligenceApplication.class, args);
+	}
+
+}
