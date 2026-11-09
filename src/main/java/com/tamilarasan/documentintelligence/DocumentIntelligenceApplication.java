@@ -7,7 +7,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class DocumentIntelligenceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(DocumentIntelligenceApplication.class, args);
-	}
 
+		SpringApplication.run(
+				DocumentIntelligenceApplication.class,
+				args
+		);
+	}
 }

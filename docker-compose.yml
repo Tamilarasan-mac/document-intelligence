@@ -1,0 +1,26 @@
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: document-intelligence-db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: document_db
+      POSTGRES_USER: document_user
+      POSTGRES_PASSWORD: document_password
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U document_user -d document_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
