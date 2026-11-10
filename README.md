@@ -1,198 +1,261 @@
-# Project Name
+# Document Intelligence
 
-> One sentence describing what the project does and who it helps.
+> A local document Q&A service that extracts text, indexes it in pgvector, and returns answers grounded in uploaded files.
 
-[![Build](https://img.shields.io/badge/build-status-lightgrey)](#)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Java](https://img.shields.io/badge/Java-21-orange)](https://www.oracle.com/java/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.2-6DB33F)](https://spring.io/projects/spring-boot)
 
-<!-- Replace the badges above with live links and status for this repository. -->
-
-## Overview
-
-Describe the problem this project solves, its main capabilities, and the intended users. Keep this section brief; link to longer documentation where needed.
+Document Intelligence provides a REST API and MCP server for uploading documents, searching their contents, and asking questions with retrieval-augmented generation (RAG). Text extraction, embeddings, vector search, and chat inference are configured to run with local services.
 
 ## Features
 
-- **Feature one** — explain the user benefit.
-- **Feature two** — explain the user benefit.
-- **Feature three** — explain the user benefit.
+- Upload PDF, DOCX, and TXT files up to 10 MB.
+- Extract text with Apache Tika and split it into searchable chunks.
+- Generate embeddings with Ollama and store chunks in PostgreSQL with pgvector.
+- Search the top five semantically similar chunks.
+- Ask questions answered from retrieved document text, with source filenames and chunk references.
+- Expose document search and Q&A as MCP tools.
+- Protect REST endpoints with an `X-API-Key` header.
 
 ## Architecture
 
-The diagram below shows a common client/API/data-store layout. Rename, remove, or add components to match the actual system; do not publish infrastructure details that should remain private.
-
 ```mermaid
 flowchart LR
-    User[User] --> Client[Web or mobile client]
-    Client -->|HTTPS / JSON| API[Application API]
-    API --> Auth[Authentication provider]
-    API --> Service[Domain services]
-    Service --> DB[(Primary database)]
-    Service --> Queue[(Optional job queue)]
-    Queue --> Worker[Background worker]
-    Worker --> DB
-    Service --> External[External APIs]
+    Client[REST client] -->|X-API-Key| API[Spring Boot API]
+    MCP[MCP client] -->|stdio| Tools[MCP tools]
+    Tools --> RAG[RAG service]
+    API --> Ingest[Document ingestion]
+    API --> RAG
+    Ingest --> Validate[Validate file and content]
+    Validate --> Tika[Apache Tika text extraction]
+    Tika --> Chunk[Token-based chunking]
+    Chunk --> Embed[Ollama embeddings<br/>nomic-embed-text]
+    Embed --> PG[(PostgreSQL + pgvector)]
+    RAG --> PG
+    RAG --> Chat[Ollama chat<br/>qwen2.5:3b]
+    Chat --> RAG
+    RAG --> API
+    API --> Client
 ```
 
 ### Request flow
 
-1. The client sends an HTTPS request to the API.
-2. The API authenticates and validates the request.
-3. Domain services read or update data and call external systems as needed.
-4. The API returns a JSON response. Long-running work can be queued for a background worker.
+1. The upload endpoint checks the filename, extension, file size, and detected content type.
+2. Apache Tika extracts text. The chunking service creates chunks with source filename and document ID metadata.
+3. Spring AI creates embeddings through Ollama and stores the chunks in the pgvector store.
+4. Search retrieves up to five similar chunks. Ask sends those chunks and the question to the configured Ollama chat model, with instructions to answer only from the supplied context.
+5. The response includes the retrieved source chunks for inspection.
+
+Uploads are processed synchronously by the API request. This repository does not include a browser UI, queue, or original-file storage service.
 
 ## Screenshots
 
-Store screenshots in the repository (for example, `docs/images/`) and use relative paths so the images travel with the code. Replace these placeholders with real captures and useful alt text.
-
-| Screen | Preview |
-|---|---|
-| Main view | `![Main view](docs/images/main-view.png)` |
-| Detail view | `![Detail view](docs/images/detail-view.png)` |
-
-<!-- Uncomment after adding the images:
-![Main view](docs/images/main-view.png)
-![Detail view](docs/images/detail-view.png)
--->
-
-Capture screenshots with representative, non-sensitive data. Avoid access tokens, personal information, internal URLs, and customer records.
+This repository is a backend service and does not currently include a graphical interface or screenshot assets. Use the architecture diagram above to see the service flow.
 
 ## Requirements
 
-List the versions and services needed to run this project, such as:
-
-- Runtime: `<language/runtime and supported version>`
-- Package manager: `<npm, pnpm, uv, etc.>`
-- Data store: `<database and version, if required>`
-- Optional services: `<queue, object storage, external API, etc.>`
+- Java 21
+- Docker with Docker Compose (for the provided PostgreSQL + pgvector service)
+- Ollama running locally, with the configured chat and embedding models downloaded
+- macOS, Linux, or Windows with WSL for the shell examples below
 
 ## Setup
 
-These are setup placeholders: replace the angle-bracket values and commands with the exact steps for this repository before publishing.
+### 1. Clone the repository
 
 ```bash
-# 1. Clone the repository and enter it
-git clone <repository-url>
-cd <repository-directory>
-
-# 2. Install dependencies using this project's package manager
-<install-command>
-
-# 3. Create local configuration from the example file
-cp .env.example .env
-
-# 4. Start required local services or apply database migrations
-<service-or-migration-command>
-
-# 5. Start the application
-<development-start-command>
+git clone https://github.com/Tamilarasan-mac/document-intelligence.git
+cd document-intelligence
 ```
 
-Open `<local URL>` in a browser. Keep real credentials in your local environment or secret manager; commit only a `.env.example` containing empty or clearly fake values.
-
-### Configuration
-
-| Variable | Required | Description | Example |
-|---|---:|---|---|
-| `APP_ENV` | Yes | Runtime environment | `development` |
-| `PORT` | Yes | Local server port | `3000` |
-| `DATABASE_URL` | If applicable | Database connection string | `postgres://user:pass@localhost:5432/app` |
-| `API_TOKEN` | If applicable | Credential for a dependent API | `<set locally>` |
-
-Document defaults and where values come from. Never put working secrets in this table or in committed files.
-
-## API
-
-Document the real base URL, authentication method, endpoints, request/response schemas, pagination, and error behavior here. The examples below use a fictional `/api/v1/widgets` endpoint and are illustrative; replace them with actual routes and sample responses.
-
-### Authentication
-
-Send a bearer token in the `Authorization` header when the API requires one. Obtain tokens through the project's approved authentication flow; do not use a real token in docs.
-
-### List widgets
+### 2. Start PostgreSQL with pgvector
 
 ```bash
-curl --request GET \
-  --url "${API_BASE_URL}/api/v1/widgets?limit=20" \
-  --header "Accept: application/json" \
-  --header "Authorization: Bearer ${API_TOKEN}"
+docker compose up -d postgres
 ```
 
-Example response:
+Compose creates a local database named `document_db` on port `5432`. The development credentials are `document_user` / `document_password`; change them before using this setup beyond local development.
 
-```json
-{
-  "data": [
-    { "id": "widget_123", "name": "Example widget" }
-  ],
-  "next_cursor": null
-}
+### 3. Install and prepare Ollama models
+
+Install and start Ollama using the instructions for your operating system at [ollama.com](https://ollama.com/download). Then pull the models configured in `src/main/resources/application.yml`:
+
+```bash
+ollama pull qwen2.5:3b
+ollama pull nomic-embed-text
 ```
 
-### Create a widget
+The service expects Ollama at `http://localhost:11434` by default.
+
+### 4. Configure API authentication
+
+The REST API returns `503 Service Unavailable` when no API key is configured. Set a non-empty key in the environment before starting the app:
+
+```bash
+export DOCUMENT_API_KEY="replace-with-a-long-random-local-secret"
+```
+
+Use your shell's equivalent environment-variable syntax on Windows. Keep the real key out of source control and request logs.
+
+### 5. Run the application
+
+macOS/Linux:
+
+```bash
+./mvnw spring-boot:run
+```
+
+Windows:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+The API listens at `http://localhost:8080`. The PostgreSQL vector-store schema is initialized by Spring AI on startup.
+
+## Configuration
+
+The defaults are in [`application.yml`](src/main/resources/application.yml).
+
+| Setting | Default | Purpose |
+|---|---|---|
+| `DOCUMENT_API_KEY` | unset | API key required in the `X-API-Key` request header |
+| PostgreSQL URL | `jdbc:postgresql://localhost:5432/document_db` | pgvector database connection |
+| PostgreSQL username | `document_user` | Database user |
+| PostgreSQL password | `document_password` | Local Compose database password; change for other environments |
+| Ollama URL | `http://localhost:11434` | Chat and embedding model service |
+| Chat model | `qwen2.5:3b` | Generates answers from retrieved chunks |
+| Embedding model | `nomic-embed-text` | Embeds document chunks and search queries |
+| Upload limit | `10MB` | Maximum multipart request and document size |
+
+Database and Ollama settings are currently defined directly in `application.yml`; configure external service values there or update the application to use environment-variable overrides for deployment.
+
+## REST API
+
+Base URL: `http://localhost:8080/api/documents`
+
+All `/api/` routes require the configured API key:
+
+```http
+X-API-Key: <your-api-key>
+```
+
+### Upload a document
 
 ```bash
 curl --request POST \
-  --url "${API_BASE_URL}/api/v1/widgets" \
+  --url http://localhost:8080/api/documents/upload \
+  --header "X-API-Key: $DOCUMENT_API_KEY" \
   --header "Accept: application/json" \
+  --form "file=@./sample.pdf"
+```
+
+Supported filename extensions are `.pdf`, `.docx`, and `.txt`. The endpoint validates that the detected file content matches its extension and rejects empty files and files over 10 MB.
+
+Example response (`201 Created`):
+
+```json
+{
+  "documentId": "2e4dc020-b6a3-45c7-b2aa-e29cda56a973",
+  "filename": "sample.pdf",
+  "totalChunks": 4,
+  "message": "Document uploaded and indexed successfully"
+}
+```
+
+### Search indexed documents
+
+```bash
+curl --request POST \
+  --url http://localhost:8080/api/documents/search \
+  --header "X-API-Key: $DOCUMENT_API_KEY" \
   --header "Content-Type: application/json" \
-  --header "Authorization: Bearer ${API_TOKEN}" \
-  --data '{"name":"Example widget"}'
+  --data '{"question":"What is the payment due date?"}'
+```
+
+The endpoint returns up to five matching chunks:
+
+```json
+[
+  {
+    "chunkId": "a-chunk-id",
+    "source": "sample.pdf",
+    "content": "Payment is due within 30 days of the invoice date."
+  }
+]
+```
+
+### Ask a question
+
+```bash
+curl --request POST \
+  --url http://localhost:8080/api/documents/ask \
+  --header "X-API-Key: $DOCUMENT_API_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{"question":"What is the payment due date?"}'
 ```
 
 Example response:
 
 ```json
 {
-  "id": "widget_123",
-  "name": "Example widget",
-  "created_at": "2026-01-15T10:30:00Z"
+  "question": "What is the payment due date?",
+  "answer": "The payment is due within 30 days of the invoice date. (Source: sample.pdf)",
+  "sources": [
+    {
+      "chunkId": "a-chunk-id",
+      "filename": "sample.pdf",
+      "content": "Payment is due within 30 days of the invoice date."
+    }
+  ]
 }
 ```
 
-### Errors
+The answer is generated from the retrieved context. The `sources` array contains the retrieved chunks; check those passages when validating an answer.
 
-Replace this table with the API's actual error format and status codes.
+### Responses and errors
 
-| Status | Meaning | Suggested action |
-|---:|---|---|
-| `400` | Invalid request | Check the request fields and format. |
-| `401` | Missing or invalid credentials | Obtain a valid token and retry. |
-| `404` | Resource not found | Check the resource ID and endpoint. |
-| `429` | Rate limit reached | Retry according to the API's rate-limit policy. |
-| `500` | Unexpected server error | Retry if appropriate and report the request ID to maintainers. |
+| Status | Meaning |
+|---:|---|
+| `200` | Search or question request completed |
+| `201` | Document extracted and indexed |
+| `400` | Invalid question, unsupported or mismatched file, empty document, or document over the size limit |
+| `401` | `X-API-Key` is missing or invalid |
+| `503` | `DOCUMENT_API_KEY` is not configured |
+| `500` | Document processing failed |
 
-### Run API checks with Postman CLI (optional)
+Error responses use a JSON `error` field. For example: `{ "error": "Only PDF, DOCX and TXT files are supported" }`.
 
-If the repository includes a Postman collection and environment, run them from the repository root. Use a local environment file with fake or non-production values; keep API keys in environment variables or your CI secret store.
+## MCP server
 
-```bash
-/Users/tamilking/.local/bin/postman collection run ./postman/collection.json \
-  --environment ./postman/local.environment.json
-```
+The application also declares an MCP server with two tools:
 
-The Postman CLI also supports running collections in CI. Configure its API key as a repository secret (for example, `POSTMAN_API_KEY`) and follow the [Postman CLI GitHub Actions guide](https://learning.postman.com/docs/postman-cli/postman-cli-github-actions). Do not paste the key into a workflow file.
+- `search_documents(question)` returns relevant text passages and their source filenames.
+- `ask_documents(question)` returns a generated answer and source references.
+
+The server is configured for stdio transport in `application.yml`. MCP clients launch the Spring application as a local process and communicate over stdin/stdout. The repository's Logback configuration sends logs to stderr so stdout remains available to the MCP transport. The host must also be able to reach PostgreSQL and Ollama.
 
 ## Development
 
-Add project-specific commands for formatting, linting, tests, and local services. For example:
+Run the test suite:
 
 ```bash
-<format-command>
-<lint-command>
-<test-command>
+./mvnw test
 ```
 
-Describe how to create test data and which external dependencies can be stubbed or mocked.
+The tests cover document ingestion validation, chunking behavior, and RAG service behavior. Build the application package with:
 
-## Deployment
+```bash
+./mvnw package
+```
 
-Summarize the supported deployment target and link to the full deployment runbook. Document required configuration, health checks, migrations, and rollback steps without exposing credentials.
+## Security notes
 
-## Contributing
-
-Contributions are welcome. For substantial changes, open an issue first to discuss the proposed change. Include local setup, coding conventions, and pull request expectations in `CONTRIBUTING.md`.
+- The API key filter protects all paths beginning with `/api/`; keep `DOCUMENT_API_KEY` private.
+- The Compose database credentials are intended for local development and are not production secrets.
+- Uploaded files are parsed and indexed; the application does not persist the original file as an object. Extracted chunks and metadata remain in PostgreSQL until deleted from the vector store/database.
+- RAG answers can be wrong. Review the returned source passages for important decisions.
 
 ## License
 
-This project is licensed under the terms in [LICENSE](LICENSE). Replace this line if the repository uses a different license.
+No `LICENSE` file is present in the repository at the time this README was prepared. Add the intended license before describing the project as open source or adding a license badge.
