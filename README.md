@@ -59,6 +59,19 @@ This repository is a backend service and does not currently include a graphical 
 - Ollama running locally, with the configured chat and embedding models downloaded
 - macOS, Linux, or Windows with WSL for the shell examples below
 
+## Frontend UI Chatbox
+
+A modern, responsive, and dark-themed web chat interface is bundled directly in `src/main/resources/static/` and served automatically by Spring Boot at root: `http://localhost:8080/`.
+
+Features:
+- **Interactive Chatbox**: Ask questions with full markdown rendering and conversation history.
+- **Edit & Resubmit**: Edit previously sent user prompts inline and regenerate responses.
+- **Copy Message**: One-click copy for user questions, assistant answers, and search results with toast notifications.
+- **Stop & Retry**: Cancel generation in-flight with the **Stop** button, and re-trigger queries on stopped, errored, or completed answers with the **Retry** action.
+- **RAG & Search Toggle**: Switch seamlessly between full AI question answering (`/api/documents/ask`) and semantic chunk search (`/api/documents/search`).
+- **Drag-and-Drop Ingestion**: Upload PDF, DOCX, or TXT documents right from the sidebar with instant progress feedback and indexed chunk counters.
+- **Source Chunk Inspector**: Click on any retrieved source pill to view its chunk ID, origin file, and exact context text in a dedicated modal.
+
 ## Setup
 
 ### 1. Clone the repository
