@@ -6,28 +6,31 @@
   <title>Document Intelligence - AI Assistant</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="lovable-theme">
+  <!-- Dynamic Ambient Soft Glow Canvas Background -->
+  <canvas id="interactive-canvas" class="interactive-bg-canvas"></canvas>
+  <div class="lovable-ambient-glow glow-top"></div>
+  <div class="lovable-ambient-glow glow-bottom"></div>
+
   <div class="app-layout">
     <!-- Sidebar / Knowledge Panel -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="logo">
-          <div class="logo-icon">
+          <div class="logo-icon lovable-glow">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
+              <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+              <path d="M2 17l10 5 10-5"></path>
+              <path d="M2 12l10 5 10-5"></path>
             </svg>
           </div>
           <div class="logo-text">
-            <span class="logo-title">DocuMind</span>
-            <span class="logo-badge">RAG AI</span>
+            <span class="logo-title">Document Intelligence</span>
+            <span class="logo-badge lovable-badge">Lovable AI</span>
           </div>
         </div>
       </div>
@@ -36,25 +39,28 @@
       <div class="sidebar-section">
         <div class="section-title">
           <span>Ingest Document</span>
-          <span class="badge-hint">PDF, DOCX, TXT</span>
+          <span class="badge-hint lovable-chip">PDF • DOCX • TXT</span>
         </div>
 
         <div class="dropzone" id="dropzone">
           <input type="file" id="file-input" accept=".pdf,.docx,.txt" hidden />
           <div class="dropzone-content">
-            <div class="upload-icon-circle">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <div class="upload-icon-circle lovable-pulse">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="17 8 12 3 7 8"></polyline>
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
             </div>
-            <p class="dropzone-primary"><strong>Click to upload</strong> or drag & drop</p>
-            <p class="dropzone-secondary">Maximum file size: 10 MB</p>
+            <p class="dropzone-primary"><strong>Drop document</strong> to vectorize</p>
+            <p class="dropzone-secondary">Up to 10 MB per file</p>
           </div>
           <div class="dropzone-loader hidden" id="upload-loader">
-            <div class="spinner"></div>
-            <span id="upload-progress-text">Extracting & indexing embeddings...</span>
+            <div class="lovable-spinner">
+              <div class="spinner-ring"></div>
+              <div class="spinner-core"></div>
+            </div>
+            <span id="upload-progress-text">Indexing into pgvector...</span>
           </div>
         </div>
 
@@ -64,16 +70,20 @@
       <!-- Recent Uploads / Indexed Documents List -->
       <div class="sidebar-section flex-grow">
         <div class="section-title">
-          <span>Indexed in Session</span>
-          <span id="doc-counter" class="pill-count">0</span>
+          <span>Indexed Knowledge</span>
+          <span id="doc-counter" class="pill-count lovable-pill">0</span>
         </div>
         <div class="doc-list" id="doc-list">
           <div class="empty-docs-placeholder">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-              <polyline points="13 2 13 9 20 9"></polyline>
-            </svg>
-            <span>No documents uploaded yet in this session.</span>
+            <div class="empty-ai-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+              </svg>
+            </div>
+            <span>No documents indexed yet. Upload documents to ground AI responses.</span>
           </div>
         </div>
       </div>
@@ -81,92 +91,142 @@
       <!-- System status footer -->
       <div class="sidebar-footer">
         <div class="system-status">
-          <span class="status-dot"></span>
-          <span>pgvector & nomic-embed-text</span>
+          <span class="status-dot lovable-online"></span>
+          <span class="ai-status-text">Ollama • pgvector • nomic-embed</span>
         </div>
       </div>
     </aside>
 
-    <!-- Main Chat Workspace -->
-    <main class="chat-container">
-      <!-- Chat Header -->
-      <header class="chat-header">
-        <div class="header-left">
-          <div class="header-title">Document Intelligence Assistant</div>
-          <div class="header-subtitle">Ask questions answered strictly from your indexed document chunks</div>
-        </div>
-        <div class="header-actions">
-          <!-- Search mode toggle -->
-          <div class="toggle-container" title="Switch between Full RAG Generation and Raw Semantic Chunk Search">
-            <button id="mode-ask-btn" class="mode-btn active">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-              <span>Ask AI (RAG)</span>
-            </button>
-            <button id="mode-search-btn" class="mode-btn">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <span>Search Chunks</span>
-            </button>
+    <!-- Main Workspace Container -->
+    <main class="chat-container" id="chat-workspace">
+      <!-- Movable / Floating Chat Window -->
+      <div class="movable-chat-window lovable-glass-panel" id="movable-window">
+        <!-- Floating Drag Handle Header -->
+        <div class="window-header" id="window-drag-header">
+          <div class="window-header-drag">
+            <div class="drag-handle-grip" title="Drag to move chatbox anywhere">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="window-identity">
+              <div class="ai-core-indicator">
+                <span class="core-ping"></span>
+                <span class="core-dot"></span>
+              </div>
+              <div class="window-title-wrap">
+                <span class="window-title">Document Intelligence</span>
+                <span class="window-subtitle">Movable AI Chatbox • Drag header to reposition</span>
+              </div>
+            </div>
           </div>
-          <button id="clear-chat-btn" class="icon-btn" title="Clear conversation history">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-          </button>
-        </div>
-      </header>
 
-      <!-- Messages Area -->
-      <div class="chat-messages" id="chat-messages">
-        <!-- Welcome banner -->
-        <div class="welcome-card" id="welcome-card">
-          <div class="welcome-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
-            </svg>
-          </div>
-          <h2>Welcome to Document Intelligence</h2>
-          <p>Upload your PDF, DOCX, or TXT documents on the left panel and query your knowledge base with zero hallucination.</p>
-          <div class="suggestions-grid">
-            <button class="suggestion-chip" data-prompt="What are the key takeaways from the uploaded document?">
-              <span class="chip-title">📌 Key takeaways</span>
-              <span class="chip-desc">Summarize main points and findings</span>
-            </button>
-            <button class="suggestion-chip" data-prompt="What deadlines, payment dates, or obligations are specified?">
-              <span class="chip-title">📅 Dates & Milestones</span>
-              <span class="chip-desc">Find payment terms, deadlines, schedules</span>
-            </button>
-            <button class="suggestion-chip" data-prompt="Explain the technical or contractual requirements mentioned.">
-              <span class="chip-title">🔍 Requirements</span>
-              <span class="chip-desc">Extract explicit clauses or specs</span>
-            </button>
-          </div>
-        </div>
-      </div>
+          <div class="window-controls">
+            <!-- Search mode toggle -->
+            <div class="toggle-container" title="Switch between Full RAG Generation and Raw Semantic Chunk Search">
+              <button id="mode-ask-btn" class="mode-btn active">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                <span>Ask AI (RAG)</span>
+              </button>
+              <button id="mode-search-btn" class="mode-btn">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <span>Chunks</span>
+              </button>
+            </div>
 
-      <!-- Chat Input Area -->
-      <div class="chat-input-wrapper">
-        <div class="chat-input-container">
-          <textarea
-            id="chat-textarea"
-            placeholder="Ask a question about your indexed documents... (Shift + Enter for newline)"
-            rows="1"
-          ></textarea>
-          <button id="stop-btn" class="stop-btn hidden" title="Stop generating">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="4" y="4" width="16" height="16" rx="2"></rect>
-            </svg>
-          </button>
-          <button id="send-btn" class="send-btn" title="Send Question" disabled>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
-          </button>
+            <!-- Movable Window Position Reset -->
+            <button id="reset-window-btn" class="icon-btn-ctrl" title="Reset window position & size">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+            </button>
+
+            <!-- Maximize / Restore Toggle -->
+            <button id="maximize-window-btn" class="icon-btn-ctrl" title="Maximize / Restore window">
+              <svg id="max-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+            </button>
+
+            <!-- Clear Chat -->
+            <button id="clear-chat-btn" class="icon-btn-ctrl" title="Clear conversation history">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </button>
+
+            <!-- Minimize to Floating Bubble -->
+            <button id="minimize-window-btn" class="icon-btn-ctrl minimize-btn" title="Minimize chat window">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+          </div>
         </div>
-        <div class="input-meta-bar">
-          <span class="mode-indicator" id="mode-indicator">Mode: <strong>Ask AI (RAG with Qwen2.5)</strong></span>
-          <span class="char-hint">Powered by Spring AI, Ollama & pgvector</span>
+
+        <!-- Messages Area -->
+        <div class="chat-messages" id="chat-messages">
+          <!-- Welcome banner -->
+          <div class="welcome-card" id="welcome-card">
+            <div class="welcome-icon lovable-avatar-glow">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+              </svg>
+            </div>
+            <h2>Document Intelligence</h2>
+            <p>AI-powered document synthesis and semantic search powered by Ollama & pgvector. This chatbox is <strong>movable & resizable</strong> anywhere across your workspace.</p>
+            <div class="suggestions-grid">
+              <button class="suggestion-chip" data-prompt="What are the key takeaways from the uploaded document?">
+                <span class="chip-title">📌 Key Takeaways</span>
+                <span class="chip-desc">Synthesize core findings & conclusions</span>
+              </button>
+              <button class="suggestion-chip" data-prompt="What deadlines, payment dates, or obligations are specified?">
+                <span class="chip-title">📅 Dates & Terms</span>
+                <span class="chip-desc">Extract contractual dates & clauses</span>
+              </button>
+              <button class="suggestion-chip" data-prompt="Explain the technical or architectural requirements mentioned.">
+                <span class="chip-title">⚡ Specifications</span>
+                <span class="chip-desc">Extract explicit requirements & metrics</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input Area -->
+        <div class="chat-input-wrapper">
+          <div class="chat-input-container">
+            <textarea
+              id="chat-textarea"
+              placeholder="Ask anything grounded in your documents... (Shift + Enter for newline)"
+              rows="1"
+            ></textarea>
+            <button id="stop-btn" class="stop-btn hidden" title="Stop generating">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+              </svg>
+            </button>
+            <button id="send-btn" class="send-btn" title="Send Question" disabled>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+          <div class="input-meta-bar">
+            <span class="mode-indicator" id="mode-indicator">Mode: <strong>Ask AI (RAG with Qwen2.5)</strong></span>
+            <span class="char-hint lovable-chip">Powered by Spring AI & pgvector</span>
+          </div>
+        </div>
+
+        <!-- Resize Gripper Handle -->
+        <div class="window-resize-handle" id="window-resize-handle" title="Drag to resize chat window">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="6" x2="6" y2="22"></line><line x1="22" y1="12" x2="12" y2="22"></line><line x1="22" y1="18" x2="18" y2="22"></line></svg>
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Movable Floating Launcher Badge (Shown when minimized) -->
+  <div class="floating-ai-launcher hidden" id="floating-launcher" title="Click to open Document Intelligence">
+    <div class="launcher-aura"></div>
+    <div class="launcher-content">
+      <div class="launcher-avatar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+        </svg>
+      </div>
+      <div class="launcher-label">Document Intelligence</div>
+    </div>
   </div>
 
   <!-- Toast Notification -->
@@ -177,7 +237,9 @@
     <div class="modal-card">
       <div class="modal-header">
         <div class="modal-title-wrap">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+          <div class="modal-doc-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+          </div>
           <span id="modal-doc-title">Document Chunk</span>
         </div>
         <button id="modal-close-btn" class="icon-btn-tiny">

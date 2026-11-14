@@ -722,4 +722,330 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
   }
+
+  // ========================================================
+  // MOVABLE & RESIZABLE WINDOW CONTROLS
+  // ========================================================
+  const movableWindow = document.getElementById('movable-window');
+  const windowDragHeader = document.getElementById('window-drag-header');
+  const windowResizeHandle = document.getElementById('window-resize-handle');
+  const resetWindowBtn = document.getElementById('reset-window-btn');
+  const maximizeWindowBtn = document.getElementById('maximize-window-btn');
+  const minimizeWindowBtn = document.getElementById('minimize-window-btn');
+  const floatingLauncher = document.getElementById('floating-launcher');
+  const maxIcon = document.getElementById('max-icon');
+
+  if (movableWindow && windowDragHeader) {
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let initialLeft = 0;
+    let initialTop = 0;
+    let isMaximized = false;
+    let preMaxRect = null;
+
+    // Center window initially
+    function centerMovableWindow() {
+      movableWindow.classList.remove('is-maximized');
+      isMaximized = false;
+      movableWindow.style.left = '';
+      movableWindow.style.top = '';
+      movableWindow.style.width = '94%';
+      movableWindow.style.height = '94%';
+      movableWindow.style.transform = '';
+      updateMaxIcon();
+    }
+
+    // Dragging Logic
+    windowDragHeader.addEventListener('mousedown', (e) => {
+      // Don't drag if clicked on button or inputs
+      if (e.target.closest('button') || e.target.closest('.toggle-container') || isMaximized) return;
+
+      isDragging = true;
+      movableWindow.classList.add('is-dragging');
+
+      const rect = movableWindow.getBoundingClientRect();
+      const parentRect = movableWindow.parentElement.getBoundingClientRect();
+
+      // Convert to px absolute positioning relative to parent workspace
+      startX = e.clientX;
+      startY = e.clientY;
+      initialLeft = rect.left - parentRect.left;
+      initialTop = rect.top - parentRect.top;
+
+      movableWindow.style.left = `${initialLeft}px`;
+      movableWindow.style.top = `${initialTop}px`;
+      movableWindow.style.width = `${rect.width}px`;
+      movableWindow.style.height = `${rect.height}px`;
+      movableWindow.style.margin = '0';
+
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+
+      let newLeft = initialLeft + dx;
+      let newTop = initialTop + dy;
+
+      const parentRect = movableWindow.parentElement.getBoundingClientRect();
+      const winWidth = movableWindow.offsetWidth;
+      const winHeight = movableWindow.offsetHeight;
+
+      // Restrict within container boundaries with small margin
+      newLeft = Math.max(0, Math.min(newLeft, parentRect.width - 80));
+      newTop = Math.max(0, Math.min(newTop, parentRect.height - 50));
+
+      movableWindow.style.left = `${newLeft}px`;
+      movableWindow.style.top = `${newTop}px`;
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        movableWindow.classList.remove('is-dragging');
+      }
+    });
+
+    // Resizing Logic
+    if (windowResizeHandle) {
+      let isResizing = false;
+      let rStartX = 0;
+      let rStartY = 0;
+      let startW = 0;
+      let startH = 0;
+
+      windowResizeHandle.addEventListener('mousedown', (e) => {
+        if (isMaximized) return;
+        isResizing = true;
+        rStartX = e.clientX;
+        rStartY = e.clientY;
+        startW = movableWindow.offsetWidth;
+        startH = movableWindow.offsetHeight;
+
+        const rect = movableWindow.getBoundingClientRect();
+        const parentRect = movableWindow.parentElement.getBoundingClientRect();
+        movableWindow.style.left = `${rect.left - parentRect.left}px`;
+        movableWindow.style.top = `${rect.top - parentRect.top}px`;
+        movableWindow.style.margin = '0';
+
+        e.preventDefault();
+        e.stopPropagation();
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        const newW = Math.max(380, startW + (e.clientX - rStartX));
+        const newH = Math.max(400, startH + (e.clientY - rStartY));
+        movableWindow.style.width = `${newW}px`;
+        movableWindow.style.height = `${newH}px`;
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isResizing) {
+          isResizing = false;
+        }
+      });
+    }
+
+    // Maximize / Restore Toggle
+    function updateMaxIcon() {
+      if (!maxIcon) return;
+      if (isMaximized) {
+        maxIcon.innerHTML = `<rect x="5" y="8" width="14" height="11" rx="2"></rect><polyline points="8 5 19 5 19 16"></polyline>`;
+      } else {
+        maxIcon.innerHTML = `<rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>`;
+      }
+    }
+
+    if (maximizeWindowBtn) {
+      maximizeWindowBtn.addEventListener('click', () => {
+        if (!isMaximized) {
+          preMaxRect = {
+            left: movableWindow.style.left,
+            top: movableWindow.style.top,
+            width: movableWindow.style.width,
+            height: movableWindow.style.height,
+          };
+          movableWindow.classList.add('is-maximized');
+          isMaximized = true;
+        } else {
+          movableWindow.classList.remove('is-maximized');
+          isMaximized = false;
+          if (preMaxRect) {
+            movableWindow.style.left = preMaxRect.left;
+            movableWindow.style.top = preMaxRect.top;
+            movableWindow.style.width = preMaxRect.width;
+            movableWindow.style.height = preMaxRect.height;
+          }
+        }
+        updateMaxIcon();
+      });
+    }
+
+    // Reset button
+    if (resetWindowBtn) {
+      resetWindowBtn.addEventListener('click', centerMovableWindow);
+    }
+
+    // Minimize to Launcher
+    if (minimizeWindowBtn && floatingLauncher) {
+      minimizeWindowBtn.addEventListener('click', () => {
+        movableWindow.classList.add('hidden');
+        floatingLauncher.classList.remove('hidden');
+      });
+
+      floatingLauncher.addEventListener('click', () => {
+        floatingLauncher.classList.add('hidden');
+        movableWindow.classList.remove('hidden');
+      });
+    }
+  }
+
+  // ========================================================
+  // REALISTIC MOVABLE CANVAS BACKGROUND
+  // Particles & Connected Constellation reacting to Mouse & Motion
+  // ========================================================
+  const canvas = document.getElementById('interactive-canvas');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    let mouse = {
+      x: width / 2,
+      y: height / 2,
+      radius: 160,
+      active: false
+    };
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+      mouse.active = true;
+    });
+
+    window.addEventListener('mouseleave', () => {
+      mouse.active = false;
+    });
+
+    // Particle class
+    class RealisticNode {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x = Math.random() * width;
+        this.y = Math.random() * height;
+        this.vx = (Math.random() - 0.5) * 0.7;
+        this.vy = (Math.random() - 0.5) * 0.7;
+        this.radius = Math.random() * 1.8 + 1.2;
+        this.baseAlpha = Math.random() * 0.45 + 0.25;
+        this.alpha = this.baseAlpha;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Wrap edges smoothly
+        if (this.x < 0) this.x = width;
+        if (this.x > width) this.x = 0;
+        if (this.y < 0) this.y = height;
+        if (this.y > height) this.y = 0;
+
+        // Interactive mouse gravity / deflection
+        if (mouse.active) {
+          const dx = mouse.x - this.x;
+          const dy = mouse.y - this.y;
+          const dist = Math.hypot(dx, dy);
+
+          if (dist < mouse.radius) {
+            const force = (1 - dist / mouse.radius) * 1.8;
+            this.x -= (dx / dist) * force;
+            this.y -= (dy / dist) * force;
+            this.alpha = Math.min(0.9, this.baseAlpha + 0.4);
+          } else {
+            this.alpha = this.baseAlpha;
+          }
+        }
+      }
+
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(165, 180, 252, ${this.alpha})`;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = 'rgba(99, 102, 241, 0.45)';
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    const nodeCount = Math.min(85, Math.floor((width * height) / 14000));
+    const nodes = Array.from({ length: nodeCount }, () => new RealisticNode());
+
+    function renderScene() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Lovable deep indigo-tinted dark canvas backdrop
+      const bgGrad = ctx.createLinearGradient(0, 0, width, height);
+      bgGrad.addColorStop(0, '#090d16');
+      bgGrad.addColorStop(0.5, '#0d1322');
+      bgGrad.addColorStop(1, '#070a12');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      // Connect nodes with soft filaments
+      const maxDistance = 140;
+      for (let i = 0; i < nodes.length; i++) {
+        nodes[i].update();
+        nodes[i].draw();
+
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
+          const dist = Math.hypot(dx, dy);
+
+          if (dist < maxDistance) {
+            const lineAlpha = (1 - dist / maxDistance) * 0.18;
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.strokeStyle = `rgba(165, 180, 252, ${lineAlpha})`;
+            ctx.lineWidth = 1;
+            ctx.stroke();
+          }
+        }
+
+        // Connect nodes to mouse cursor
+        if (mouse.active) {
+          const mdx = nodes[i].x - mouse.x;
+          const mdy = nodes[i].y - mouse.y;
+          const mDist = Math.hypot(mdx, mdy);
+          if (mDist < mouse.radius) {
+            const mAlpha = (1 - mDist / mouse.radius) * 0.35;
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(mouse.x, mouse.y);
+            ctx.strokeStyle = `rgba(168, 85, 247, ${mAlpha})`;
+            ctx.lineWidth = 1.2;
+            ctx.stroke();
+          }
+        }
+      }
+
+      requestAnimationFrame(renderScene);
+    }
+
+    renderScene();
+  }
 });
