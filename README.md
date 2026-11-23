@@ -15,7 +15,6 @@ Document Intelligence provides a REST API and MCP server for uploading documents
 - Search the top five semantically similar chunks.
 - Ask questions answered from retrieved document text, with source filenames and chunk references.
 - Expose document search and Q&A as MCP tools.
-- Protect REST endpoints with an `X-API-Key` header.
 
 ## Architecture
 
