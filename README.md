@@ -20,7 +20,7 @@ Document Intelligence provides a REST API and MCP server for uploading documents
 
 ```mermaid
 flowchart LR
-    Client[REST client] -->|X-API-Key| API[Spring Boot API]
+    Client[REST client] --> API[Spring Boot API]
     MCP[MCP client] -->|stdio| Tools[MCP tools]
     Tools --> RAG[RAG service]
     API --> Ingest[Document ingestion]
@@ -99,17 +99,7 @@ ollama pull nomic-embed-text
 
 The service expects Ollama at `http://localhost:11434` by default.
 
-### 4. Configure API authentication
-
-The REST API returns `503 Service Unavailable` when no API key is configured. Set a non-empty key in the environment before starting the app:
-
-```bash
-export DOCUMENT_API_KEY="replace-with-a-long-random-local-secret"
-```
-
-Use your shell's equivalent environment-variable syntax on Windows. Keep the real key out of source control and request logs.
-
-### 5. Run the application
+### 4. Run the application
 
 macOS/Linux:
 
@@ -131,7 +121,6 @@ The defaults are in [`application.yml`](src/main/resources/application.yml).
 
 | Setting | Default | Purpose |
 |---|---|---|
-| `DOCUMENT_API_KEY` | unset | API key required in the `X-API-Key` request header |
 | PostgreSQL URL | `jdbc:postgresql://localhost:5432/document_db` | pgvector database connection |
 | PostgreSQL username | `document_user` | Database user |
 | PostgreSQL password | `document_password` | Local Compose database password; change for other environments |
@@ -146,18 +135,11 @@ Database and Ollama settings are currently defined directly in `application.yml`
 
 Base URL: `http://localhost:8080/api/documents`
 
-All `/api/` routes require the configured API key:
-
-```http
-X-API-Key: <your-api-key>
-```
-
 ### Upload a document
 
 ```bash
 curl --request POST \
   --url http://localhost:8080/api/documents/upload \
-  --header "X-API-Key: $DOCUMENT_API_KEY" \
   --header "Accept: application/json" \
   --form "file=@./sample.pdf"
 ```
@@ -180,7 +162,6 @@ Example response (`201 Created`):
 ```bash
 curl --request POST \
   --url http://localhost:8080/api/documents/search \
-  --header "X-API-Key: $DOCUMENT_API_KEY" \
   --header "Content-Type: application/json" \
   --data '{"question":"What is the payment due date?"}'
 ```
@@ -202,7 +183,6 @@ The endpoint returns up to five matching chunks:
 ```bash
 curl --request POST \
   --url http://localhost:8080/api/documents/ask \
-  --header "X-API-Key: $DOCUMENT_API_KEY" \
   --header "Content-Type: application/json" \
   --data '{"question":"What is the payment due date?"}'
 ```
@@ -232,8 +212,6 @@ The answer is generated from the retrieved context. The `sources` array contains
 | `200` | Search or question request completed |
 | `201` | Document extracted and indexed |
 | `400` | Invalid question, unsupported or mismatched file, empty document, or document over the size limit |
-| `401` | `X-API-Key` is missing or invalid |
-| `503` | `DOCUMENT_API_KEY` is not configured |
 | `500` | Document processing failed |
 
 Error responses use a JSON `error` field. For example: `{ "error": "Only PDF, DOCX and TXT files are supported" }`.
@@ -263,7 +241,6 @@ The tests cover document ingestion validation, chunking behavior, and RAG servic
 
 ## Security notes
 
-- The API key filter protects all paths beginning with `/api/`; keep `DOCUMENT_API_KEY` private.
 - The Compose database credentials are intended for local development and are not production secrets.
 - Uploaded files are parsed and indexed; the application does not persist the original file as an object. Extracted chunks and metadata remain in PostgreSQL until deleted from the vector store/database.
 - RAG answers can be wrong. Review the returned source passages for important decisions.
